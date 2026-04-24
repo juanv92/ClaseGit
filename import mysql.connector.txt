@@ -1,0 +1,255 @@
+import mysql.connector
+from mysql.connector import Error
+
+def conectar_y_visualizar():
+    try:
+        # 1. Configuración de los parámetros de conexión
+        conexion = mysql.connector.connect(
+            host='localhost',       # O la IP de tu servidor
+            user='tu_usuario',      # Por defecto suele ser 'root'
+            password='tu_password', # Tu contraseña de MySQL
+            database='nombre_db'    # La base de datos que quieres ver
+        )
+
+        if conexion.is_connected():
+            print("¡Conexión exitosa a MySQL!")
+            
+            # 2. Crear un cursor para ejecutar sentencias SQL
+            cursor = conexion.cursor()
+            
+            # 3. Ejecutar una consulta (ejemplo: ver una tabla)
+            tabla = "tu_tabla"
+            cursor.execute(f"SELECT * FROM {tabla}")
+            
+            # 4. Obtener y mostrar los registros
+            resultados = cursor.fetchall()
+            
+            print(f"\n--- Datos en la tabla {tabla} ---")
+            for fila in resultados:
+                print(fila)
+
+    except Error as e:
+        print(f"Error al conectar a MySQL: {e}")
+
+    finally:
+        # 5. Cerrar la conexión siempre
+        if 'conexion' in locals() and conexion.is_connected():
+            cursor.close()
+            conexion.close()
+            print("\nConexión cerrada.")
+
+if __name__ == "__main__":
+    conectar_y_visualizar()
+
+
+CODIGO 2 ORGANIZADO
+import mysql.connector
+from mysql.connector import Error
+
+# 1. Función única para gestionar la conexión
+def obtener_conexion():
+    try:
+        return mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='',
+            database='la_colmenita'
+        )
+    except Error as e:
+        print(f"Error crítico de conexión: {e}")
+        return None
+
+# 2. Función para mostrar datos
+def visualizar_datos_ferreteria():
+    conexion = obtener_conexion()
+    if conexion and conexion.is_connected():
+        try:
+            cursor = conexion.cursor(dictionary=True)
+            
+            # Consulta de productos
+            query_prod = """
+                SELECT p.id_producto, p.nombre_producto, p.marca, c.nombre_categoria 
+                FROM productos p
+                JOIN categorias c ON p.id_categoria = c.id_categoria
+            """
+            cursor.execute(query_prod)
+            print("\n--- INVENTARIO DE LA COLMENITA ---")
+            for prod in cursor.fetchall():
+                print(f"{prod['id_producto']} | {prod['nombre_producto']} | {prod['marca']}")
+
+            # Consulta de clientes
+            cursor.execute("SELECT nombre, apellido, correo FROM clientes")
+            print("\n--- LISTADO DE CLIENTES ---")
+            for cli in cursor.fetchall():
+                print(f"{cli['nombre']} {cli['apellido']} - {cli['correo']}")
+                
+        finally:
+            cursor.close()
+            conexion.close()
+
+# 3. Función para registrar datos
+def registrar_cliente(nombre, apellido, telefono, correo, mensaje):
+    conexion = obtener_conexion()
+    if conexion and conexion.is_connected():
+        try:
+            cursor = conexion.cursor()
+            sql = "INSERT INTO clientes (nombre, apellido, telefono, correo, mensaje) VALUES (%s, %s, %s, %s, %s)"
+            valores = (nombre, apellido, telefono, correo, mensaje)
+            cursor.execute(sql, valores)
+            conexion.commit()
+            print(f"¡Cliente {nombre} registrado con éxito!")
+        except Error as e:
+            print(f"Error al insertar: {e}")
+        finally:
+            cursor.close()
+            conexion.close()
+
+# 4. Bloque de ejecución principal (SIEMPRE AL FINAL)
+if __name__ == "__main__":
+    # Primero visualizamos lo que hay
+    visualizar_datos_ferreteria()
+    
+    # Ejemplo de uso de la función de registro
+    # registrar_cliente("Juan", "Perez", "3001234567", "juan@correo.com", "Interesado en herramientas") 
+2. Siguientes pasos para tu proyecto
+Como estás trabajando en el ecosistema digital de La Colmenita en Bogotá, podrías escalar esto de las siguientes formas:
+
+Conexión con tu Web: Usar este código como base para que el formulario de contacto de tu página (el que tiene el botón de WhatsApp) guarde los datos directamente en MySQL.
+
+Reporte de Inventario: Crear un script que te avise qué productos de marcas como Bosch o Stanley tienen pocas unidades, cruzando las tablas que ya creaste.
+
+Exportación: Pasar los datos de MySQL a un Excel automáticamente usando la librería pandas para tus informes de ventas.
+
+Asegúrate de tener instalada la librería del conector:
+pip install mysql-connector-python
+
+
+
+import pandas as pd
+from sqlalchemy import create_engine
+
+# Crear el motor de conexión
+engine = create_engine('mysql+mysqlconnector://usuario:password@localhost/nombre_db')
+
+# Leer la tabla directamente a un DataFrame
+df = pd.read_sql("SELECT * FROM tu_tabla", engine)
+
+print(df.head()) # Muestra las primeras 5 filas
+
+
+Este script crea una ventana donde puedes ver los productos actuales y un formulario para agregar nuevos artículos a las categorías que ya definiste (Herramientas, Tornillería, etc.).
+import tkinter as tk
+from tkinter import ttk, messagebox
+import mysql.connector
+
+# --- FUNCIÓN DE CONEXIÓN ---
+def conectar():
+    return mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='',
+        database='la_colmenita'
+    )
+
+# --- FUNCIÓN PARA INSERTAR PRODUCTO ---
+def guardar_producto():
+    nombre = entry_nombre.get()
+    desc = entry_desc.get()
+    marca = entry_marca.get()
+    cat_id = combo_categoria.get().split(" - ")[0] # Extrae solo el ID
+
+    if nombre == "" or marca == "":
+        messagebox.showwarning("Atención", "Por favor llena los campos obligatorios")
+        return
+
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+        sql = "INSERT INTO productos (nombre_producto, descrip_producto, marca, id_categoria) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql, (nombre, desc, marca, cat_id))
+        conn.commit()
+        messagebox.showinfo("Éxito", f"Producto '{nombre}' agregado correctamente")
+        limpiar_formulario()
+        actualizar_tabla()
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo guardar: {e}")
+    finally:
+        conn.close()
+
+# --- FUNCIÓN PARA REFRESCAR LA TABLA ---
+def actualizar_tabla():
+    for i in tabla.get_children():
+        tabla.delete(i)
+    
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT p.id_producto, p.nombre_producto, p.marca, c.nombre_categoria 
+        FROM productos p 
+        JOIN categorias c ON p.id_categoria = c.id_categoria
+    """)
+    for fila in cursor.fetchall():
+        tabla.insert("", "end", values=fila)
+    conn.close()
+
+def limpiar_formulario():
+    entry_nombre.delete(0, tk.END)
+    entry_desc.delete(0, tk.END)
+    entry_marca.delete(0, tk.END)
+
+# --- CONFIGURACIÓN DE LA VENTANA ---
+root = tk.Tk()
+root.title("Gestión de Inventario - La Colmenita")
+root.geometry("700x500")
+root.configure(bg="#f0f0f0")
+
+# Título
+tk.Label(root, text="Panel de Control: La Colmenita", font=("Arial", 16, "bold"), bg="#f0f0f0").pack(pady=10)
+
+# Formulario
+frame_form = tk.Frame(root, bg="#f0f0f0")
+frame_form.pack(pady=10)
+
+tk.Label(frame_form, text="Nombre:", bg="#f0f0f0").grid(row=0, column=0, padx=5, pady=5)
+entry_nombre = tk.Entry(frame_form, width=30)
+entry_nombre.grid(row=0, column=1)
+
+tk.Label(frame_form, text="Marca:", bg="#f0f0f0").grid(row=1, column=0, padx=5, pady=5)
+entry_marca = tk.Entry(frame_form, width=30)
+entry_marca.grid(row=1, column=1)
+
+tk.Label(frame_form, text="Descripción:", bg="#f0f0f0").grid(row=2, column=0, padx=5, pady=5)
+entry_desc = tk.Entry(frame_form, width=30)
+entry_desc.grid(row=2, column=1)
+
+tk.Label(frame_form, text="Categoría:", bg="#f0f0f0").grid(row=3, column=0, padx=5, pady=5)
+combo_categoria = ttk.Combobox(frame_form, values=[
+    "1 - Herramientas manuales", 
+    "2 - Herramientas eléctricas", 
+    "3 - Medición", 
+    "4 - Accesorios", 
+    "5 - Tornillería"
+], state="readonly", width=27)
+combo_categoria.grid(row=3, column=1)
+combo_categoria.current(0)
+
+btn_guardar = tk.Button(root, text="Agregar Producto", command=guardar_producto, bg="#4CAF50", fg="white", font=("Arial", 10, "bold"))
+btn_guardar.pack(pady=10)
+
+# Tabla de visualización
+columnas = ("ID", "Producto", "Marca", "Categoría")
+tabla = ttk.Treeview(root, columns=columnas, show="headings", height=8)
+for col in columnas:
+    tabla.heading(col, text=col)
+    tabla.column(col, width=150)
+tabla.pack(pady=20, padx=20)
+
+actualizar_tabla()
+root.mainloop()
+
+¿Cómo usarlo?
+Copia el código en un archivo llamado app_colmenita.py.
+
+Ejecútalo con python app_colmenita.py.
+
+Verás aparecer una ventana con los productos que ya tienes (Martillo Stanley, Taladro Bosch, etc.) y podrás agregar más.

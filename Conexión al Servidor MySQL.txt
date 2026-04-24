@@ -1,0 +1,51 @@
+1 Conexión al Servidor MySQL Para conectarte al servidor MySQL desde la terminal, utiliza el siguiente comando:
+
+mysql -h nombre_servidor -u nombre_usuario -p
+
+Si estás trabajando en local, puedes usar:
+
+mysql -h localhost -u root -p
+
+2 Seleccionar una Base de Datos Una vez conectado, selecciona la base de datos con el comando:
+
+USE nombre_base_datos;
+
+3 Consultar Bases de Datos Disponibles Para listar todas las bases de datos en el servidor:
+
+SHOW DATABASES;
+
+4 Crear una Nueva Base de Datos Puedes crear una base de datos con:
+
+CREATE DATABASE nombre_base_datos;
+
+5 Listar Tablas en una Base de Datos Después de seleccionar una base de datos, lista sus tablas con:
+
+SHOW TABLES;
+
+6 Describir una Tabla Para obtener información sobre los campos y tipos de datos de una tabla:
+
+DESCRIBE nombre_tabla;
+
+7 Ejecutar Consultas SQL Básicas
+Crear una tabla:
+CREATE TABLE prueba (id INT);
+Insertar datos:
+INSERT INTO prueba (id) VALUES (1), (2), (3);
+Consultar datos:
+SELECT * FROM prueba;
+8 Salir del Cliente MySQL Para cerrar la conexión con el servidor MySQL, escribe:
+QUIT;
+
+SELECT - extracts data from a database
+UPDATE - updates data in a database
+DELETE - deletes data from a database
+INSERT INTO - inserts new data into a database
+CREATE DATABASE - creates a new database
+ALTER DATABASE - modifies a database
+CREATE TABLE - creates a new table
+ALTER TABLE - modifies a table
+DROP TABLE - deletes a table
+CREATE INDEX - creates an index (search key)
+DROP INDEX - deletes an index
+
+https://desarrolloweb.com/articulos/2408.php
